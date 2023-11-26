@@ -7,14 +7,17 @@ scalar DateTime @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\Date
 type Query {
     users: [User!]! @paginate(defaultCount: 10) @guard
     user(id: ID @eq): User @find @guard
-    subjects(orderBy: _ @orderBy(columns: ["created_at", "test_chamber", "date_of_birth"])): [Subject!]! @all @guard
+    subjects(
+        user_id: ID @eq
+        orderBy: _ @orderBy(columns: ["created_at", "test_chamber", "date_of_birth"])
+    ): [Subject!]! @all
     subject(id: ID @eq): Subject @find
     me: User @auth
 }
 
 type Mutation {
     deleteSubject(id: ID!): Subject @delete
-    createSubject(name: String!, date_of_birth: DateTime!, test_chamber: Int!, score: Int!, alive: Boolean!): Subject! @create
+    createSubject(name: String!, date_of_birth: DateTime!, test_chamber: Int!, score: Int!, alive: Boolean!, user_id: ID): Subject! @create
     updateSubject(id: ID!, name: String!, date_of_birth: DateTime!, test_chamber: Int!, score: Int!, alive: Boolean!): Subject! @update
 }
 
@@ -35,4 +38,5 @@ type Subject {
     alive: Boolean!
     created_at: DateTime!
     updated_at: DateTime!
+    user_id: ID
 }

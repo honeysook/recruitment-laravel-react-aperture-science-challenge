@@ -54,6 +54,7 @@ export default function Subjects(props: NextPage & {XSRF_TOKEN: string, hostname
         url: `${api}/logout`,
         withCredentials: true
       }).then((response) => {
+        localStorage.clear();
         removeCookie("XSRF-TOKEN");
         setAuth(!(response.status === 204))
         return router.push('/');
@@ -64,12 +65,10 @@ export default function Subjects(props: NextPage & {XSRF_TOKEN: string, hostname
   }
 
   const create = () => {
-    console.log('goto crete new subject ');
     router.push('/subject/create');
   }
 
   const update = (subject: Subject) => {
-    console.log('goto update subject ');
     router.push(`/subject/update/${subject.id}`);
   }
 
@@ -82,15 +81,16 @@ export default function Subjects(props: NextPage & {XSRF_TOKEN: string, hostname
   }
 
   useEffect(() => {
-    console.log(' authenticated ', authenticated);
-    console.log('props ', props);
     if (authenticated) {
       axios.post(
           `${api}/graphql`,
           {
             query: `
               query {
-                subjects(orderBy: { column: ${sortProperty}, order: ${sortOrder} }) {
+                subjects(
+                  user_id: ${localStorage.getItem('userid')}
+                  orderBy: { column: ${sortProperty}, order: ${sortOrder} }
+                ) {
                   id
                   name
                   test_chamber
@@ -98,6 +98,7 @@ export default function Subjects(props: NextPage & {XSRF_TOKEN: string, hostname
                   score
                   alive
                   created_at
+                  user_id
                 }
               }
             `

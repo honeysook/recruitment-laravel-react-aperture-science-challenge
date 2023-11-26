@@ -37,6 +37,7 @@ export default function CreateSubject(props: NextPage & {XSRF_TOKEN: string, hos
     const [cookie, setCookie, removeCookie] = useCookies(["XSRF-TOKEN"])
     const api = `${props.protocol}//${props.hostname}`;
     const [ message, setErrorMessage ] = useState<string>('');
+    const userid = localStorage.getItem('userid');
 
     const create = async (event: any) => {
         event.preventDefault()
@@ -45,22 +46,25 @@ export default function CreateSubject(props: NextPage & {XSRF_TOKEN: string, hos
                 `${api}/graphql`,
                 {
                     query: `
-              mutation {
-                createSubject(name: "${subject.name}", 
-                  date_of_birth: "${subject.date_of_birth+' 00:00:00'}", 
-                  test_chamber:${subject.test_chamber}, 
-                  score: ${subject.score}, 
-                  alive: ${subject.alive}) 
-                {
-                  id
-                  name
-                  date_of_birth
-                  test_chamber
-                  score
-                  alive
-                }
-              }
-            `
+                      mutation {
+                        createSubject(name: "${subject.name}", 
+                          date_of_birth: "${subject.date_of_birth+' 00:00:00'}", 
+                          test_chamber:${subject.test_chamber}, 
+                          score: ${subject.score}, 
+                          alive: ${subject.alive}, 
+                          user_id: ${userid}
+                          )
+                        {
+                          id
+                          name
+                          date_of_birth
+                          test_chamber
+                          score
+                          alive
+                          user_id
+                        }
+                      }
+                    `
                 },
                 { withCredentials: true }
             ).then(response => {

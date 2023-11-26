@@ -40,8 +40,33 @@ export default function Home(props: NextPage & {XSRF_TOKEN: string, hostname: st
             xsrfCookieName: 'XSRF-TOKEN',
             xsrfHeaderName: 'X-XSRF-TOKEN',
           }
-        }).then(res => router.push('/subjects'))
-        .catch(e => {
+        }).then(response => {
+          console.log(response);
+
+          axios.post(
+              `${api}/graphql`,
+              {
+                query: `
+                      query {
+                        me 
+                        {
+                          id
+                        }
+                      }
+                    `
+              },
+              { withCredentials: true }
+          ).then(response => {
+            if(response.data?.data?.me?.id) {
+              localStorage.setItem('userid', response.data?.data?.me?.id);
+              router.push('/subjects');
+            } else {
+              setFormMessage('An error occurred, please try again later.')
+            }
+          }).catch((e) => {
+            console.log(e);
+          })
+        }).catch(e => {
           if (e.response?.data?.message) {
             setFormMessage(e.response?.data?.message);
           } else {
