@@ -33,6 +33,35 @@ export default function Subjects(props: NextPage & {XSRF_TOKEN: string, hostname
   const [cookie, setCookie, removeCookie] = useCookies(["XSRF-TOKEN"])
   const api = `${props.protocol}//${props.hostname}`;
 
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
+  const sortByProperty = (property: string) => {
+    if (subjects) {
+      const sortedSubjects = subjects.slice().sort((a, b) => {
+        const valueA = a[property];
+        const valueB = b[property];
+
+        if (typeof valueA === 'string' && typeof valueB === 'string') {
+          // Both values are strings, perform string comparison
+          return sortOrder === 'asc' ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
+        } else if (valueA instanceof Date && valueB instanceof Date) {
+          // Both values are dates, perform date comparison
+          return sortOrder === 'asc' ? valueA.getTime() - valueB.getTime() : valueB.getTime() - valueA.getTime();
+        } else {
+          // Both values are numbers, perform numeric comparison
+          return sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
+        }
+
+        // Fallback, if the types are not recognized
+        return 0;
+      });
+
+      setSubjects(sortedSubjects as Subject[]);
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    }
+  };
+
+
   const logout = async () => {
     try {
       await axios({
@@ -60,9 +89,9 @@ export default function Subjects(props: NextPage & {XSRF_TOKEN: string, hostname
   useEffect(() => {
     if (authenticated) {
       axios.post(
-        `${api}/graphql`,
-        {
-          query: `
+          `${api}/graphql`,
+          {
+            query: `
               query {
                 subjects {
                   id
@@ -75,8 +104,8 @@ export default function Subjects(props: NextPage & {XSRF_TOKEN: string, hostname
                 }
               }
             `
-        },
-        { withCredentials: true }
+          },
+          { withCredentials: true }
       ).then(response => {
         const { subjects = [] } = response.data?.data;
         if (subjects && subjects.length > 0) {
@@ -101,68 +130,74 @@ export default function Subjects(props: NextPage & {XSRF_TOKEN: string, hostname
   }, [authenticated]);
 
   return (
-    <Layout>
-      <h1>Testing Subjects</h1>
-      <section className={styles.content}>
-        {message && (
-          <p data-testid="error-msg">{message}</p>
-        )}
-        {subjects && subjects.length > 0 && (
-          <table data-testid="subjects-table">
-            <thead>
-              <tr>
-                <td>ID</td>
-                <td>Name</td>
-                <td>DOB</td>
-                <td>Alive</td>
-                <td>Score</td>
-                <td>Test Chamber</td>
-              </tr>
-            </thead>
-            <tbody>
-              {subjects.map(subject => (
-                <tr key={subject.id}>
-                  <td>{subject.id}</td>
-                  <td>{subject.name}</td>
-                  <td>{formatDate(subject.date_of_birth)}</td>
-                  <td>{subject.alive ? 'Y' : 'N'}</td>
-                  <td>{subject.score}</td>
-                  <td>{subject.test_chamber}</td>
+      <Layout>
+        <h1>Testing Subjects</h1>
+        <section className={styles.content}>
+          {message && (
+              <p data-testid="error-msg">{message}</p>
+          )}
+          {subjects && subjects.length > 0 && (
+              <table data-testid="subjects-table">
+                <thead>
+                <tr>
+                  <td>ID</td>
+                  <td>Name</td>
+                  <td><span onClick={() => sortByProperty('date_of_birth')}  style={{ cursor: 'pointer' }}>
+                    DOB {sortOrder === 'asc' ? '↑' : '↓'}
+                  </span></td>
+                  <td>Alive</td>
+                  <td>Score</td>
+                  <td>
+                  <span onClick={() => sortByProperty('test_chamber')}  style={{ cursor: 'pointer' }}>
+                    Test Chamber {sortOrder === 'asc' ? '↑' : '↓'}
+                  </span>
+                  </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-        {!subjects && !message && (
-          <div className={styles.skeleton} data-testid="skeleton">
-            <table>
-            <thead>
-              <tr>
-                <td>ID</td>
-                <td>Name</td>
-                <td>DOB</td>
-                <td>Alive</td>
-                <td>Score</td>
-                <td>Test Chamber</td>
-              </tr>
-            </thead>
-            <tbody>
-              {Array.from(Array(10).keys()).map(subject => (
-                <tr key={subject}>
-                  <td>&nbsp;</td>
-                  <td>&nbsp;</td>
-                  <td>&nbsp;</td>
-                  <td>&nbsp;</td>
-                  <td>&nbsp;</td>
-                  <td>&nbsp;</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          </div>
-        )}
-        {authenticated && <button onClick={logout}>Log out</button>}
-      </section>
-    </Layout>
+                </thead>
+                <tbody>
+                {subjects.map(subject => (
+                    <tr key={subject.id}>
+                      <td>{subject.id}</td>
+                      <td>{subject.name}</td>
+                      <td>{formatDate(subject.date_of_birth)}</td>
+                      <td>{subject.alive ? 'Y' : 'N'}</td>
+                      <td>{subject.score}</td>
+                      <td>{subject.test_chamber}</td>
+                    </tr>
+                ))}
+                </tbody>
+              </table>
+          )}
+          {!subjects && !message && (
+              <div className={styles.skeleton} data-testid="skeleton">
+                <table>
+                  <thead>
+                  <tr>
+                    <td>ID</td>
+                    <td>Name</td>
+                    <td>DOB</td>
+                    <td>Alive</td>
+                    <td>Score</td>
+                    <td>Test Chamber</td>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  {Array.from(Array(10).keys()).map(subject => (
+                      <tr key={subject}>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                      </tr>
+                  ))}
+                  </tbody>
+                </table>
+              </div>
+          )}
+          {authenticated && <button onClick={logout}>Log out</button>}
+        </section>
+      </Layout>
   )
 }
