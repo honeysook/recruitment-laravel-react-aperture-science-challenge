@@ -33,34 +33,21 @@ export default function Subjects(props: NextPage & {XSRF_TOKEN: string, hostname
   const [cookie, setCookie, removeCookie] = useCookies(["XSRF-TOKEN"])
   const api = `${props.protocol}//${props.hostname}`;
 
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
+
+  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC'); // Define setSortOrder
+  const [sortProperty, setSortProperty] = useState<string>('CREATED_AT'); // Track the property to sort by
 
   const sortByProperty = (property: string) => {
-    if (subjects) {
-      const sortedSubjects = subjects.slice().sort((a, b) => {
-        const valueA = a[property];
-        const valueB = b[property];
-
-        if (typeof valueA === 'string' && typeof valueB === 'string') {
-          // Both values are strings, perform string comparison
-          return sortOrder === 'asc' ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
-        } else if (valueA instanceof Date && valueB instanceof Date) {
-          // Both values are dates, perform date comparison
-          return sortOrder === 'asc' ? valueA.getTime() - valueB.getTime() : valueB.getTime() - valueA.getTime();
-        } else {
-          // Both values are numbers, perform numeric comparison
-          return sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
-        }
-
-        // Fallback, if the types are not recognized
-        return 0;
-      });
-
-      setSubjects(sortedSubjects as Subject[]);
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    if (property === sortProperty) {
+      // If clicking on the same property, toggle the sort order
+      setSortOrder(sortOrder === 'ASC' ? 'DESC' : 'ASC');
+    } else {
+      // If clicking on a different property, set the new property and default to ascending order
+      setSortProperty(property);
+      setSortOrder('ASC');
     }
   };
-
 
   const logout = async () => {
     try {
@@ -78,6 +65,11 @@ export default function Subjects(props: NextPage & {XSRF_TOKEN: string, hostname
     }
   }
 
+  const create = () => {
+    console.log('goto crete new subject ');
+    // router.push('/subject/create');
+  }
+
   const formatDate = (dateStr: string | undefined) => {
     if (!dateStr) {
       return '???'
@@ -93,7 +85,7 @@ export default function Subjects(props: NextPage & {XSRF_TOKEN: string, hostname
           {
             query: `
               query {
-                subjects {
+                subjects(orderBy: { column: ${sortProperty}, order: ${sortOrder} }) {
                   id
                   name
                   test_chamber
@@ -127,7 +119,7 @@ export default function Subjects(props: NextPage & {XSRF_TOKEN: string, hostname
       router.push('/');
       return;
     }
-  }, [authenticated]);
+  }, [authenticated, sortProperty, sortOrder]);
 
   return (
       <Layout>
@@ -136,22 +128,23 @@ export default function Subjects(props: NextPage & {XSRF_TOKEN: string, hostname
           {message && (
               <p data-testid="error-msg">{message}</p>
           )}
+
+          {authenticated && <button onClick={create}>New Record</button>}
+
           {subjects && subjects.length > 0 && (
               <table data-testid="subjects-table">
                 <thead>
                 <tr>
                   <td>ID</td>
                   <td>Name</td>
-                  <td><span onClick={() => sortByProperty('date_of_birth')}  style={{ cursor: 'pointer' }}>
-                    DOB {sortOrder === 'asc' ? '↑' : '↓'}
+                  <td><span onClick={() => sortByProperty('DATE_OF_BIRTH')}  style={{ cursor: 'pointer' }}>
+                    DOB {sortOrder === 'ASC' ? '↑' : '↓'}
                   </span></td>
                   <td>Alive</td>
                   <td>Score</td>
-                  <td>
-                  <span onClick={() => sortByProperty('test_chamber')}  style={{ cursor: 'pointer' }}>
-                    Test Chamber {sortOrder === 'asc' ? '↑' : '↓'}
-                  </span>
-                  </td>
+                  <td><span onClick={() => sortByProperty('TEST_CHAMBER')}  style={{ cursor: 'pointer' }}>
+                    Test Chamber {sortOrder === 'ASC' ? '↑' : '↓'}
+                  </span></td>
                 </tr>
                 </thead>
                 <tbody>
