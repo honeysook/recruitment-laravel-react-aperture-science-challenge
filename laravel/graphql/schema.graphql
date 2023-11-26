@@ -15,6 +15,7 @@ type Query {
 type Mutation {
     deleteSubject(id: ID!): Subject @delete
     createSubject(name: String!, date_of_birth: DateTime!, test_chamber: Int!, score: Int!, alive: Boolean!): Subject! @create
+    updateSubject(id: ID!, name: String!, date_of_birth: DateTime!, test_chamber: Int!, score: Int!, alive: Boolean!): Subject! @update
 }
 
 type User {
