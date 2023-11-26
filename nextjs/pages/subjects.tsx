@@ -28,13 +28,11 @@ Subjects.getInitialProps = ({ req, res }: NextPageContext) => {
 export default function Subjects(props: NextPage & {XSRF_TOKEN: string, hostname: string, protocol:string}) {
   const router = useRouter();
   const [ authenticated, setAuth ] = useState<Boolean>(!!props.XSRF_TOKEN);
+
   const [ subjects, setSubjects ] = useState<Array<Subject>>();
   const [ message, setErrorMessage ] = useState<string>('');
   const [cookie, setCookie, removeCookie] = useCookies(["XSRF-TOKEN"])
   const api = `${props.protocol}//${props.hostname}`;
-
-
-
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC'); // Define setSortOrder
   const [sortProperty, setSortProperty] = useState<string>('CREATED_AT'); // Track the property to sort by
 
@@ -67,7 +65,12 @@ export default function Subjects(props: NextPage & {XSRF_TOKEN: string, hostname
 
   const create = () => {
     console.log('goto crete new subject ');
-    // router.push('/subject/create');
+    router.push('/subject/create');
+  }
+
+  const update = (subject: Subject) => {
+    console.log('goto update subject ');
+    router.push(`/subject/update/${subject.id}`);
   }
 
   const formatDate = (dateStr: string | undefined) => {
@@ -79,6 +82,8 @@ export default function Subjects(props: NextPage & {XSRF_TOKEN: string, hostname
   }
 
   useEffect(() => {
+    console.log(' authenticated ', authenticated);
+    console.log('props ', props);
     if (authenticated) {
       axios.post(
           `${api}/graphql`,
@@ -99,6 +104,7 @@ export default function Subjects(props: NextPage & {XSRF_TOKEN: string, hostname
           },
           { withCredentials: true }
       ).then(response => {
+        console.log(response);
         const { subjects = [] } = response.data?.data;
         if (subjects && subjects.length > 0) {
           return setSubjects(subjects as Subject[]);
@@ -137,14 +143,19 @@ export default function Subjects(props: NextPage & {XSRF_TOKEN: string, hostname
                 <tr>
                   <td>ID</td>
                   <td>Name</td>
-                  <td><span onClick={() => sortByProperty('DATE_OF_BIRTH')}  style={{ cursor: 'pointer' }}>
+                  <td>
+                  <span onClick={() => sortByProperty('DATE_OF_BIRTH')}  style={{ cursor: 'pointer' }}>
                     DOB {sortOrder === 'ASC' ? '↑' : '↓'}
-                  </span></td>
+                  </span>
+                  </td>
                   <td>Alive</td>
                   <td>Score</td>
-                  <td><span onClick={() => sortByProperty('TEST_CHAMBER')}  style={{ cursor: 'pointer' }}>
+                  <td>
+                  <span onClick={() => sortByProperty('TEST_CHAMBER')}  style={{ cursor: 'pointer' }}>
                     Test Chamber {sortOrder === 'ASC' ? '↑' : '↓'}
-                  </span></td>
+                  </span>
+                  </td>
+                  <td> Update </td>
                 </tr>
                 </thead>
                 <tbody>
@@ -156,6 +167,11 @@ export default function Subjects(props: NextPage & {XSRF_TOKEN: string, hostname
                       <td>{subject.alive ? 'Y' : 'N'}</td>
                       <td>{subject.score}</td>
                       <td>{subject.test_chamber}</td>
+                      <td>
+                  <span onClick={() => update(subject)}  style={{ cursor: 'pointer' }}>
+                    Update
+                  </span>
+                      </td>
                     </tr>
                 ))}
                 </tbody>
