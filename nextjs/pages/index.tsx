@@ -17,6 +17,18 @@ export default function Home(props: NextPage & {XSRF_TOKEN: string, hostname: st
   const [ message, setFormMessage ] = useState('');
   const router = useRouter();
   const api = `${props.protocol}//${props.hostname}`;
+  const [isDialogOpen, setDialogOpen] = useState(false);
+  const [myemail, setMyemail] = useState('');
+
+  const [isModalOpen, setModalOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  const openDialog = () => setDialogOpen(true);
+  const closeDialog = () => setDialogOpen(false);
+
+  const openModal = () => setModalOpen(true);
+  const closeModal = () => setModalOpen(false);
 
   const login = async (event: any) => {
     event.preventDefault()
@@ -80,6 +92,59 @@ export default function Home(props: NextPage & {XSRF_TOKEN: string, hostname: st
     }
   }
 
+  const forgotPassword = () => {
+    console.log('email updated:', myemail);
+
+    axios({
+      method: "post",
+      url: `${api}/forgot-password`,
+      data: {
+        "email": myemail
+      },
+      withCredentials: true,
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        xsrfCookieName: 'XSRF-TOKEN',
+        xsrfHeaderName: 'X-XSRF-TOKEN',
+      }
+    }).then(response => {
+      closeDialog();
+    }).catch((e) => {
+      console.log(e);
+      closeDialog();
+    })
+  }
+
+  const resetPassword = () => {
+    console.log('my email:', myemail);
+    console.log('Password updated:', newPassword);
+
+    axios({
+      method: "post",
+      url: `${api}/reset-password`,
+      data: {
+        "email": myemail,
+        "password": newPassword,
+        "password_confirmation": confirmPassword
+      },
+      withCredentials: true,
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+        xsrfCookieName: 'XSRF-TOKEN',
+        xsrfHeaderName: 'X-XSRF-TOKEN',
+      }
+    }).then(response => {
+      closeDialog();
+    }).catch((e) => {
+      console.log(e);
+      closeDialog();
+    })
+  }
+
   return (
     <Layout>
       <h1>Please login</h1>
@@ -99,8 +164,57 @@ export default function Home(props: NextPage & {XSRF_TOKEN: string, hostname: st
           <div className={styles.inputGroup}>
             <input id="submit" type="submit"/>
           </div>
+
+          <div className={styles.inputGroup}>
+            <button type="button" onClick={openDialog}>Forgot Password</button>
+          </div>
         </form>
+
+        {isDialogOpen && (
+            <div className="modal-overlay">
+              <div className="modal">
+                <p>Enter your email.</p>
+                <input
+                    id="myemail"
+                    type="email"
+                    value={myemail}
+                    onChange={(e) => setMyemail(e.target.value)}
+                />
+
+                <button onClick={forgotPassword}>Forgot Request Password</button>
+                <button onClick={closeDialog}>Cancel</button>
+              </div>
+            </div>
+        )}
+
+        <div className={styles.inputGroup}>
+          <button type="button" onClick={openModal}>Reset Password</button>
+        </div>
+
+        {isModalOpen && (
+            <div className="modal-overlay">
+              <div className="modal">
+                <p>Enter your new password.</p>
+                <input
+                    id="newPassword"
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                />
+                <p>Confirm password</p>
+                <input
+                    id="passwordConfirmation"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+                <button onClick={resetPassword}>Reset Update Password</button>
+                <button onClick={closeModal}>Cancel</button>
+              </div>
+            </div>
+        )}
       </section>
+
     </Layout>
   )
 }
