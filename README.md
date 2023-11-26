@@ -12,7 +12,7 @@ For this challenge, you will require docker and docker-compose available in your
 
 ![Application infrastructure](./infrastructure.jpg)
 
-Fork this repository and clone it into your working environment of choice.
+Fork this repository and clone it into your working environment of choice..
 
 Once available, run the following commands from the root directory:
 
