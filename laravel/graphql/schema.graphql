@@ -10,7 +10,7 @@ type Query {
     subjects(
         user_id: ID @eq
         orderBy: _ @orderBy(columns: ["created_at", "test_chamber", "date_of_birth"])
-    ): [Subject!]! @all
+    ): [Subject!]! @paginate @guard
     subject(id: ID @eq): Subject @find
     me: User @auth
 }

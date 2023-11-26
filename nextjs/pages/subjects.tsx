@@ -35,6 +35,12 @@ export default function Subjects(props: NextPage & {XSRF_TOKEN: string, hostname
   const api = `${props.protocol}//${props.hostname}`;
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC'); // Define setSortOrder
   const [sortProperty, setSortProperty] = useState<string>('CREATED_AT'); // Track the property to sort by
+  const [page, setPage] = useState<number>(1);
+  const [perPage, setPerPage] = useState<number>(3); // Adjust the number of items per page as needed
+  const [paginatorInfo, setPaginatorInfo] = useState<number>();
+  const changePage = (newPage: number) => {
+    setPage(newPage);
+  };
 
   const sortByProperty = (property: string) => {
     if (property === sortProperty) {
@@ -88,27 +94,38 @@ export default function Subjects(props: NextPage & {XSRF_TOKEN: string, hostname
             query: `
               query {
                 subjects(
+                  first: ${perPage},
+                  page: ${page},
                   user_id: ${localStorage.getItem('userid')}
                   orderBy: { column: ${sortProperty}, order: ${sortOrder} }
-                ) {
-                  id
-                  name
-                  test_chamber
-                  date_of_birth
-                  score
-                  alive
-                  created_at
-                  user_id
+                ) 
+                {
+                    data {
+                            id
+                            name
+                            test_chamber
+                            date_of_birth
+                            score
+                            alive
+                            created_at
+                            user_id
+                    }
+                    paginatorInfo {
+                             currentPage
+                             lastPage
+                             hasMorePages
+                             lastItem
+                             total
+                    }
                 }
               }
             `
           },
           { withCredentials: true }
       ).then(response => {
-        console.log(response);
-        const { subjects = [] } = response.data?.data;
-        if (subjects && subjects.length > 0) {
-          return setSubjects(subjects as Subject[]);
+        if (response.data?.data?.subjects?.data.length > 0) {
+          setPaginatorInfo(response.data?.data?.subjects.paginatorInfo);
+          return setSubjects(response.data?.data?.subjects?.data as Subject[]);
         }
       }).catch((e) => {
         console.log(e);
@@ -126,7 +143,7 @@ export default function Subjects(props: NextPage & {XSRF_TOKEN: string, hostname
       router.push('/');
       return;
     }
-  }, [authenticated, sortProperty, sortOrder]);
+  }, [authenticated, sortProperty, sortOrder, page, perPage]);
 
   return (
       <Layout>
@@ -139,6 +156,7 @@ export default function Subjects(props: NextPage & {XSRF_TOKEN: string, hostname
           {authenticated && <button onClick={create}>New Record</button>}
 
           {subjects && subjects.length > 0 && (
+              <div>
               <table data-testid="subjects-table">
                 <thead>
                 <tr>
@@ -176,7 +194,16 @@ export default function Subjects(props: NextPage & {XSRF_TOKEN: string, hostname
                     </tr>
                 ))}
                 </tbody>
+
               </table>
+                <button onClick={() => changePage(page - 1)} disabled={page === 1}>
+                  Previous
+                </button>
+                <span> Page {page} </span>
+                <button onClick={() => changePage(page + 1)} disabled={subjects.length < perPage}>
+                  Next
+                </button>
+              </div>
           )}
           {!subjects && !message && (
               <div className={styles.skeleton} data-testid="skeleton">
@@ -206,6 +233,8 @@ export default function Subjects(props: NextPage & {XSRF_TOKEN: string, hostname
                 </table>
               </div>
           )}
+
+
           {authenticated && <button onClick={logout}>Log out</button>}
         </section>
       </Layout>
