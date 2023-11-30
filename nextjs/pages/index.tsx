@@ -20,15 +20,8 @@ export default function Home(props: NextPage & {XSRF_TOKEN: string, hostname: st
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [myemail, setMyemail] = useState('');
 
-  const [isModalOpen, setModalOpen] = useState(false);
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-
   const openDialog = () => setDialogOpen(true);
   const closeDialog = () => setDialogOpen(false);
-
-  const openModal = () => setModalOpen(true);
-  const closeModal = () => setModalOpen(false);
 
   const login = async (event: any) => {
     event.preventDefault()
@@ -92,57 +85,33 @@ export default function Home(props: NextPage & {XSRF_TOKEN: string, hostname: st
     }
   }
 
-  const forgotPassword = () => {
+  const forgotPassword = async () => {
+
     console.log('email updated:', myemail);
-
-    axios({
-      method: "post",
-      url: `${api}/forgot-password`,
-      data: {
-        "email": myemail
-      },
-      withCredentials: true,
-      headers: {
-        "X-Requested-With": "XMLHttpRequest",
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-        xsrfCookieName: 'XSRF-TOKEN',
-        xsrfHeaderName: 'X-XSRF-TOKEN',
-      }
-    }).then(response => {
-      closeDialog();
+    await axios.get(
+        `${api}/sanctum/csrf-cookie`,
+        { withCredentials: true }
+    ).then(async () => {
+      axios({
+        method: "post",
+        url: `${api}/forgot-password`,
+        data: {
+          "email": myemail
+        },
+        withCredentials: true
+      }).then(response => {
+        console.log('forgot sent email success', response);
+        closeDialog();
+      }).catch((e) => {
+        console.log('forgot sent email fail', e);
+        console.log(e);
+        closeDialog();
+      })
     }).catch((e) => {
-      console.log(e);
-      closeDialog();
+      setFormMessage('forgot password error, please try again later.')
+      console.log('error', e);
     })
-  }
 
-  const resetPassword = () => {
-    console.log('my email:', myemail);
-    console.log('Password updated:', newPassword);
-
-    axios({
-      method: "post",
-      url: `${api}/reset-password`,
-      data: {
-        "email": myemail,
-        "password": newPassword,
-        "password_confirmation": confirmPassword
-      },
-      withCredentials: true,
-      headers: {
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-        "X-Requested-With": "XMLHttpRequest",
-        xsrfCookieName: 'XSRF-TOKEN',
-        xsrfHeaderName: 'X-XSRF-TOKEN',
-      }
-    }).then(response => {
-      closeDialog();
-    }).catch((e) => {
-      console.log(e);
-      closeDialog();
-    })
   }
 
   return (
@@ -186,35 +155,7 @@ export default function Home(props: NextPage & {XSRF_TOKEN: string, hostname: st
               </div>
             </div>
         )}
-
-        <div className={styles.inputGroup}>
-          <button type="button" onClick={openModal}>Reset Password</button>
-        </div>
-
-        {isModalOpen && (
-            <div className="modal-overlay">
-              <div className="modal">
-                <p>Enter your new password.</p>
-                <input
-                    id="newPassword"
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                />
-                <p>Confirm password</p>
-                <input
-                    id="passwordConfirmation"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                />
-                <button onClick={resetPassword}>Reset Update Password</button>
-                <button onClick={closeModal}>Cancel</button>
-              </div>
-            </div>
-        )}
       </section>
-
     </Layout>
   )
 }
