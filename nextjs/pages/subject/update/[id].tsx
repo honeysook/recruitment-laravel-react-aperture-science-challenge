@@ -12,7 +12,7 @@ interface Subject {
     id: number,
     name: string,
     test_chamber?: number,
-    date_of_birth?: string,
+    date_of_birth: string,
     score?: number,
     alive?: boolean,
     created_at?: string,
@@ -92,7 +92,8 @@ export default function UpdateSubject(props: NextPage & {XSRF_TOKEN: string, hos
 
     const update = async (event: any) => {
         event.preventDefault()
-        if (authenticated) {
+        if (authenticated && subject) {
+            const birthdate = subject.date_of_birth ? subject.date_of_birth.substring(0,10)+' 00:00:00' : '';
             axios.post(
                 `${api}/graphql`,
                 {
@@ -101,7 +102,7 @@ export default function UpdateSubject(props: NextPage & {XSRF_TOKEN: string, hos
                         updateSubject(
                           id: ${subject.id}
                           name: "${subject.name}", 
-                          date_of_birth: "${subject.date_of_birth.substring(0,10)+' 00:00:00'}", 
+                          date_of_birth: "${birthdate}", 
                           test_chamber:${subject.test_chamber}, 
                           score: ${subject.score}, 
                           alive: ${subject.alive}) 
